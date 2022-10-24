@@ -1,43 +1,115 @@
-import React, { useState } from 'react';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonPage, IonButtons, IonMenuButton, IonRow, IonCol, IonButton, IonList, IonItem, IonLabel, IonInput, IonText } from '@ionic/react';
-import './Login.scss';
-import { setIsLoggedIn, setUsername } from '../data/user/user.actions';
-import { connect } from '../data/connect';
-import { RouteComponentProps } from 'react-router';
+import React, { useState } from 'react'
+import { RouteComponentProps } from 'react-router'
+import {
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonPage,
+  IonButtons,
+  IonMenuButton,
+  IonRow,
+  IonCol,
+  IonButton,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonInput,
+  IonText,
+  useIonToast,
+  IonRippleEffect
+} from '@ionic/react'
+import { connect } from '../data/connect'
+
+import { sendLoginForm } from '../classes/strapi/sendLoginForm'
+import { StrapiAuthProps } from '../classes/strapi/sendLoginForm'
+
+import './Login.scss'
+import { globe } from 'ionicons/icons'
+import { setIsLoggedInData, setUserData } from '../data/dataApi'
+import { restCallAsync } from '../classes/core/axios';
+import { useTranslation } from 'react-i18next'
+
+
+
+interface DispatchProps {
+
+}
 
 interface OwnProps extends RouteComponentProps {}
 
-interface DispatchProps {
-  setIsLoggedIn: typeof setIsLoggedIn;
-  setUsername: typeof setUsername;
-}
+interface LoginProps extends OwnProps, DispatchProps {}
 
-interface LoginProps extends OwnProps,  DispatchProps { }
+const Login: React.FC<LoginProps> = ({
+  history
+}) => {
 
-const Login: React.FC<LoginProps> = ({setIsLoggedIn, history, setUsername: setUsernameAction}) => {
+  const { t, i18n } = useTranslation();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [usernameError, setUsernameError] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
+  let testing = true && process.env.REACT_APP_TESTING
 
-  const login = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormSubmitted(true);
-    if(!username) {
-      setUsernameError(true);
-    }
-    if(!password) {
-      setPasswordError(true);
-    }
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
 
+  const [formSubmitted, setFormSubmitted] = useState(false)
+  const [usernameError, setUsernameError] = useState(false)
+  const [passwordError, setPasswordError] = useState(false)
+
+  const [setToast, dismissToast] = useIonToast()
+  const launchToast = async (data: any, setToast: Function) => {
+    await setToast({
+      message: data.message,
+      duration: data.duration ?? 1000,
+      position: data.position ?? 'bottom',
+      icon: data.icon ?? globe
+    })
+    setTimeout(()=>{
+      dismissToast()
+    },data.duration ?? 1500)
+  }
+
+ const onLoginSuccess = async (ret: any) => {
+    let user = ret.user
+    user.jwt = ret.jwt // Attach JWT...
+    await setUserData(user)
+    await setIsLoggedInData(true)
+    return user
+  }    
+
+  const submitLogin = async (e: React.FormEvent) => {
+
+    e.preventDefault()
+    setFormSubmitted(true)
+
+    if(!username) setUsernameError(true)    
+    if(!password) setPasswordError(true)
     if(username && password) {
-      await setIsLoggedIn(true);
-      await setUsernameAction(username);
-      history.push('/tabs/schedule', {direction: 'none'});
+
+      await restCallAsync({
+        req: {
+          url: 'api/auth/local',
+          data: { 
+            identifier: testing ? 'bunny@gmail.com' : username,
+            password: testing ? 'Qwer1234' : password 
+          },
+          method: 'POST'
+        },
+        onSuccess: async (ret: StrapiAuthProps)=>{
+          await onLoginSuccess(ret)
+            .then((user: any)=>{
+              console.log('ret', user)
+              launchToast({ message: t(`{{username}}, has logrado logearte`,{ username: user.username }) }, setToast)
+                .then(()=> history.push('/tabs/schedule', {direction: 'none'}))            
+            })
+        },
+        onError: (err: Error)=> {
+          launchToast({ message: 'No tienes permisos de acceso' }, setToast)
+        }
+      })
+    
     }
-  };
+
+  }
 
   return (
     <IonPage id="login-page">
@@ -55,7 +127,7 @@ const Login: React.FC<LoginProps> = ({setIsLoggedIn, history, setUsername: setUs
           <img src="assets/img/appicon.svg" alt="Ionic logo" />
         </div>
 
-        <form noValidate onSubmit={login}>
+        <form noValidate onSubmit={submitLogin}>
           <IonList>
             <IonItem>
               <IonLabel position="stacked" color="primary">Username</IonLabel>
@@ -88,7 +160,7 @@ const Login: React.FC<LoginProps> = ({setIsLoggedIn, history, setUsername: setUs
               <IonButton type="submit" expand="block">Login</IonButton>
             </IonCol>
             <IonCol>
-              <IonButton routerLink="/signup" color="light" expand="block">Signup</IonButton>
+              <IonButton className={'ion-activatable ripple-parent'} routerLink="/signup" color="light" expand="block">Signup<IonRippleEffect></IonRippleEffect></IonButton>
             </IonCol>
           </IonRow>
         </form>
@@ -96,13 +168,11 @@ const Login: React.FC<LoginProps> = ({setIsLoggedIn, history, setUsername: setUs
       </IonContent>
 
     </IonPage>
-  );
-};
+  )
+}
 
 export default connect<OwnProps, {}, DispatchProps>({
   mapDispatchToProps: {
-    setIsLoggedIn,
-    setUsername
-  },
+      },
   component: Login
 })

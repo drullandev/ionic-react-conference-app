@@ -1,32 +1,32 @@
-import React from 'react';
-import { RouteComponentProps, withRouter, useLocation } from 'react-router';
+import React from 'react'
+import { RouteComponentProps, withRouter, useLocation } from 'react-router'
 
-import { IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonMenu, IonMenuToggle, IonToggle } from '@ionic/react';
-import { calendarOutline, hammer, moonOutline, help, informationCircleOutline, logIn, logOut, mapOutline, peopleOutline, person, personAdd } from 'ionicons/icons';
+import { IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonMenu, IonMenuToggle } from '@ionic/react'
+import { informationCircleOutline, logIn, logOut, person, personAdd } from 'ionicons/icons'
 
-import { connect } from '../data/connect';
-import { setDarkMode } from '../data/user/user.actions';
+import { connect } from '../data/connect'
+import { setDarkMode } from '../data/user/user.actions'
 
-import './Menu.css'
+import '../styles/Menu.css'
 
 const routes = {
   appPages: [
-    { title: 'Schedule', path: '/tabs/schedule', icon: calendarOutline },
-    { title: 'Speakers', path: '/tabs/speakers', icon: peopleOutline },
-    { title: 'Map', path: '/tabs/map', icon: mapOutline },
+    //{ title: 'Schedule', path: '/tabs/schedule', icon: calendarOutline },
+    //{ title: 'Speakers', path: '/tabs/speakers', icon: peopleOutline },
+    //{ title: 'Map', path: '/tabs/map', icon: mapOutline }, // Not for now...
     { title: 'About', path: '/tabs/about', icon: informationCircleOutline }
   ],
   loggedInPages: [
     { title: 'Account', path: '/account', icon: person },
-    { title: 'Support', path: '/support', icon: help },
+    //{ title: 'Support', path: '/support', icon: help },
     { title: 'Logout', path: '/logout', icon: logOut }
   ],
   loggedOutPages: [
     { title: 'Login', path: '/login', icon: logIn },
-    { title: 'Support', path: '/support', icon: help },
+    //{ title: 'Support', path: '/support', icon: help }, // I will move to account
     { title: 'Signup', path: '/signup', icon: personAdd }
   ]
-};
+}
 
 interface Pages {
   title: string,
@@ -35,9 +35,9 @@ interface Pages {
   routerDirection?: string
 }
 interface StateProps {
-  darkMode: boolean;
-  isAuthenticated: boolean;
-  menuEnabled: boolean;
+  darkMode: boolean
+  isAuthenticated: boolean
+  menuEnabled: boolean
 }
 
 interface DispatchProps {
@@ -47,7 +47,7 @@ interface DispatchProps {
 interface MenuProps extends RouteComponentProps, StateProps, DispatchProps { }
 
 const Menu: React.FC<MenuProps> = ({ darkMode, history, isAuthenticated, setDarkMode, menuEnabled }) => {
-  const location = useLocation();
+  const location = useLocation()
 
   function renderlistItems(list: Pages[]) {
     return list
@@ -59,7 +59,7 @@ const Menu: React.FC<MenuProps> = ({ darkMode, history, isAuthenticated, setDark
             <IonLabel>{p.title}</IonLabel>
           </IonItem>
         </IonMenuToggle>
-      ));
+      ))
   }
 
   return (
@@ -72,25 +72,20 @@ const Menu: React.FC<MenuProps> = ({ darkMode, history, isAuthenticated, setDark
         <IonList lines="none">
           <IonListHeader>Account</IonListHeader>
           {isAuthenticated ? renderlistItems(routes.loggedInPages) : renderlistItems(routes.loggedOutPages)}
-          <IonItem>
-            <IonIcon slot="start" icon={moonOutline}></IonIcon>
-            <IonLabel>Dark Mode</IonLabel>
-            <IonToggle checked={darkMode} onClick={() => setDarkMode(!darkMode)} />
-          </IonItem>
         </IonList>
         <IonList lines="none">
-          <IonListHeader>Tutorial</IonListHeader>
+          {/*<IonListHeader>Tutorial</IonListHeader>
           <IonItem button onClick={() => {
-            history.push('/tutorial');
+            history.push('/tutorial')
           }}>
             <IonIcon slot="start" icon={hammer} />
             Show Tutorial
-          </IonItem>
+          </IonItem>*/}
         </IonList>
       </IonContent>
     </IonMenu>
-  );
-};
+  )
+}
 
 export default connect<{}, StateProps, {}>({
   mapStateToProps: (state) => ({
